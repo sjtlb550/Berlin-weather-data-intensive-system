@@ -1,2 +1,4 @@
 *.ipynb
 .DS_Store
+cassandra_data/
+data/

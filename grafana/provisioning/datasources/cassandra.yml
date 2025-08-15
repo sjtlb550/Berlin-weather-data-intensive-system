@@ -1,0 +1,14 @@
+apiVersion: 1
+
+datasources:
+  - name: Cassandra
+    uid: cassandra
+    type: cassandra-datasource              
+    editable: true
+    url: cassandra:9042                     
+    jsonData:
+      contactPoints: ["cassandra:9042"]
+      username: cassandra
+      password: cassandra
+      keyspace: weather_ks
+      consistency: ONE
