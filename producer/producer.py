@@ -8,28 +8,28 @@ import json
 from kafka import  KafkaProducer
 
 
+# using the open_meteo open source API to ingest data
+# Tesing the ouput by printing out before connecting to kafka.
 def get_data():
-    url = f"https://api.tomorrow.io/v4/weather/realtime?location=berlin&apikey=N44iq7V8vdgJovgQVgl2DQZMe62ifttY"
+    url = f"https://api.open-meteo.com/v1/forecast?latitude=52.5244&longitude=13.4105&current=relative_humidity_2m,temperature_2m,precipitation,wind_speed_10m,rain,apparent_temperature,is_day,showers,wind_direction_10m,pressure_msl,surface_pressure,cloud_cover,weather_code&timezone=Europe%2FBerlin&past_days=7"
     response = requests.get(url).json()
-    values = {
+    values ={
         'id': str(uuid.uuid4()),
-        'time': response['data']['time'],
+        'time': response['current']['time'],
         'metrics':{
-            'dewPoint': response['data']['values']['dewPoint'],
-            'humidity': response['data']['values']['humidity'],
-            'temperature': response['data']['values']['temperature'],
-            'windSpeed': response['data']['values']['windSpeed']}}
-
-
+            'temperature': response['current']['temperature_2m'],
+            'apparent_temp': response['current']['apparent_temperature'],
+            'humidity': response['current']['relative_humidity_2m'],
+            'windSpeed': response['current']['wind_speed_10m'] }}
+    
     for metric, val in values['metrics'].items():
         message = {
             'id': values['id'],
             'time': values['time'],
             'metric': metric,
-            'value': val
-                }
+            'value': val} # the final message shape.
 
-        time.sleep(1)
+        time.sleep(1) # print out every 1 sec
         yield message
   
 while True:
