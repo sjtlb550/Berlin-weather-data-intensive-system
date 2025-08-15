@@ -31,8 +31,29 @@ def get_data():
 
         time.sleep(1) # print out every 1 sec
         yield message
+
+
+
+        
   
-while True:
-    weather_data = get_data()    
-    for m in weather_data:
-        print(m)
+#kafka producer instant
+#encoding the input to be accepted by kafka
+producer = KafkaProducer(bootstrap_servers=['kafka:9092'],
+            value_serializer=lambda x: json.dumps(x).encode('utf-8'))
+
+
+
+
+try:
+    while True:
+        for weather_data in get_data():
+            producer.send('weather-topic', value = weather_data,
+                           key = weather_data['metric'].encode('utf-8'))
+
+        producer.flush()
+        time.sleep(5)
+except KeyboardInterrupt:
+    print('STOP!!!')
+
+finally:
+    producer.close()
