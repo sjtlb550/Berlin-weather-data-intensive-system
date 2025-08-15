@@ -38,10 +38,15 @@ def get_data():
   
 #kafka producer instant
 #encoding the input to be accepted by kafka
-producer = KafkaProducer(bootstrap_servers=['kafka:9092'],
+#used loop and try-except statement to automatically creates a connection once kafka is ready.
+while True:
+    try:
+        producer = KafkaProducer(bootstrap_servers=['kafka:9092'],
             value_serializer=lambda x: json.dumps(x).encode('utf-8'))
-
-
+    except Exception as e:
+        time.sleep(5)
+    
+        
 
 
 try:
