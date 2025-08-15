@@ -25,3 +25,49 @@ services:
             KAFKA_BOOTSTRAP_SERVERS: kafka:9092
         depends_on: 
             - kafka
+
+    cassandra:
+        image: cassandra:4.1
+        ports:
+            - "9042:9042"
+        environment:
+            CASSANDRA_USER: "cassandra"
+            CASSANDRA_PASSWORD: "cassandra"
+            CASSANDRA_AUTHENTICATOR: PasswordAuthenticator
+        healthcheck:
+            test: ["CMD", "cqlsh", "-u", "cassandra", "-p", "cassandra", "-e", "SELECT now() FROM system.local;"]
+            interval: 10s
+            timeout: 10s
+            retries: 12
+        volumes:
+             - '$PWD/cassandra_data:/var/lib/cassandra'
+
+    spark:
+        build: ./consumer
+        #command: ["tail", "-f", "/dev/null"] 
+        depends_on:
+            kafka:
+                condition: service_started
+            cassandra:
+                condition: service_healthy
+    
+    grafana:
+        image: grafana/grafana-oss
+        container_name: grafana
+        environment:
+            - GF_INSTALL_PLUGINS=hadesarchitect-cassandra-datasource
+        user: '0'
+
+        ports:
+            - "3000:3000"
+        depends_on:
+            - cassandra
+        volumes:
+            - '$PWD/data:/var/lib/grafana'
+       
+
+volumes:
+  cassandra_data:
+  grafana_data:
+    
+       
