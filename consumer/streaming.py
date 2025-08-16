@@ -65,7 +65,7 @@ schema = StructType() \
 # creates a timestamp column. 
 parsed = (raw.select(from_json(col("value").cast("string"), schema).alias('data'))\
     .select("data.*")\
-    .withColumn("event_time",to_timestamp('time', "yyyy-MM-dd'T'HH:mm")))
+    .withColumn("event_time",to_timestamp('time', "yyyy-MM-dd'T'HH:mm:ssX")))
 
 #Aggregating data every 1 minute
 aggregated = (parsed.withWatermark('event_time', '2 minutes')\

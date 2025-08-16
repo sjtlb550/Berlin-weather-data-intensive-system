@@ -15,7 +15,7 @@ def get_data():
     response = requests.get(url).json()
     values ={
         'id': str(uuid.uuid4()),
-        'time': response['current']['time'],
+        'time':  datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
         'metrics':{
             'temperature': response['current']['temperature_2m'],
             'apparent_temp': response['current']['apparent_temperature'],
