@@ -65,11 +65,11 @@ schema = StructType() \
 # creates a timestamp column. 
 parsed = (raw.select(from_json(col("value").cast("string"), schema).alias('data'))\
     .select("data.*")\
-    .withColumn("event_time",to_timestamp('time', "yyyy-MM-dd'T'HH:mm:ssX")))
+    .withColumn("event_time",to_timestamp('time', "yyyy-MM-dd'T'HH:mm")))
 
 #Aggregating data every 1 minute
-aggregated = (parsed.withWatermark('event_time', '2 minutes') \
-              .groupby(col("metric"), window(col("event_time"), "1 minute"))\
+aggregated = (parsed.withWatermark('event_time', '2 minutes')\
+        .groupby(col("metric"), window(col("event_time"), "1 minute"))\
         .agg(avg("value").alias("avg_val"),
             min('value').alias('min_val'),
             max("value").alias("max_val"),
@@ -79,23 +79,26 @@ aggregated = (parsed.withWatermark('event_time', '2 minutes') \
         col("window.end").alias("window_end"),
         "avg_val", "min_val", "max_val", "var_val"))
 
-test_stream = aggregated.writeStream \
+
+parsed.writeStream \
     .format('console')\
     .outputMode('append')\
+    .option("truncate", False)\
     .start()\
     .awaitTermination()
 
 # Proceed with Cassandra write
-cassandra_query = aggregated.writeStream \
+aggregated.writeStream \
     .format("org.apache.spark.sql.cassandra") \
     .option("checkpointLocation", "/tmp/checkpoints/aggregates") \
     .option("keyspace", "weather_ks") \
     .option("table", "aggregates") \
     .outputMode("append") \
-    .start()
+    .start()\
+    .awaitTermination()
 
 # Await termination for query.
-spark.streams.awaitAnyTermination()
+#spark.streams.awaitAnyTermination()
 
 
 
