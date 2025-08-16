@@ -72,7 +72,7 @@ parsed = (raw.select(from_json(col("value").cast("string"), schema).alias('data'
 #Aggregating data every 1 minute
 aggregated = ( 
     parsed.withWatermark('event_time', '2 minutes') # Handles late data 
-        .groupby(col("metric"), window(col("event_time"), "10 minutes"))
+        .groupby(col("metric"), window(col("event_time"), "20 minutes"))
         .agg(avg("value").alias("avg_val"),
             min('value').alias('min_val'),
             max("value").alias("max_val"),
