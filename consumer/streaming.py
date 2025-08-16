@@ -46,7 +46,7 @@ spark = SparkSession.builder\
 
 
 #Read from kafka (Connects to Kafka at kafka:9092, subscribes to topic weather-topic)
-raw= spark.readStream \
+raw= spark.readStream\
     .format('kafka')\
     .option('kafka.bootstrap.servers', "kafka:9092")\
     .option("subscribe", "weather-topic")\
@@ -63,26 +63,27 @@ schema = StructType() \
 # pickup kafka message ->turns binary into string ->
 # parse this string according to schema -> unpack the string into individual cols->
 # creates a timestamp column. 
-parsed = (
-    raw.select(from_json(col("value").cast("string"), schema).alias('data'))\
+parsed = (raw.select(from_json(col("value").cast("string"), schema).alias('data'))\
     .select("data.*")\
     .withColumn("event_time",to_timestamp('time', "yyyy-MM-dd'T'HH:mm:ssX")))
 
 #Aggregating data every 1 minute
-aggregated = ( 
-    parsed.withWatermark('event_time', '2 minutes') # Handles late data 
-        .groupby(col("metric"), window(col("event_time"), "1 minute"))
-        .agg(
-            avg("value").alias("avg_val"),
+aggregated = (parsed.withWatermark('event_time', '2 minutes') \
+              .groupby(col("metric"), window(col("event_time"), "1 minute"))\
+        .agg(avg("value").alias("avg_val"),
             min('value').alias('min_val'),
             max("value").alias("max_val"),
-            variance("value").alias("var_val"))
-    .select(
-        col("metric"),
+            variance("value").alias("var_val"))\
+    .select(col("metric"),
         col("window.start").alias("window_start"),
         col("window.end").alias("window_end"),
         "avg_val", "min_val", "max_val", "var_val"))
 
+test_stream = aggregated.writeStream \
+    .format('console')\
+    .outputMode('append')\
+    .start()\
+    .awaitTermination()
 
 # Proceed with Cassandra write
 cassandra_query = aggregated.writeStream \
@@ -93,7 +94,7 @@ cassandra_query = aggregated.writeStream \
     .outputMode("append") \
     .start()
 
-# Await termination for both queries
+# Await termination for query.
 spark.streams.awaitAnyTermination()
 
 

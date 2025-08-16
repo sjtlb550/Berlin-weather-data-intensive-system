@@ -29,7 +29,7 @@ def get_data():
             'metric': metric,
             'value': val} # the final message shape.
 
-        time.sleep(1) # print out every 1 sec
+        time.sleep(1) # sends a message every 3 sec
         yield message
 
 
@@ -41,13 +41,12 @@ def get_data():
 #used loop and try-except statement to automatically creates a connection once kafka is ready.
 while True:
     try:
-        producer = KafkaProducer(bootstrap_servers=['kafka:9092'],
+        producer = KafkaProducer(
+            bootstrap_servers=['kafka:9092'],
             value_serializer=lambda x: json.dumps(x).encode('utf-8'))
+        break
     except Exception as e:
         time.sleep(5)
-    
-        
-
 
 try:
     while True:
@@ -62,3 +61,4 @@ except KeyboardInterrupt:
 
 finally:
     producer.close()
+
