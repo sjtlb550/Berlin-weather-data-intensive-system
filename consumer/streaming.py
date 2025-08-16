@@ -67,25 +67,30 @@ parsed = (raw.select(from_json(col("value").cast("string"), schema).alias('data'
     .select("data.*")\
     .withColumn("event_time",to_timestamp('time', "yyyy-MM-dd'T'HH:mm:ssX")))
 
+
+
 #Aggregating data every 1 minute
-aggregated = (parsed.withWatermark('event_time', '2 minutes')\
-        .groupby(col("metric"), window(col("event_time"), "1 minute"))\
+aggregated = ( 
+    parsed.withWatermark('event_time', '2 minutes') # Handles late data 
+        .groupby(col("metric"), window(col("event_time"), "10 minutes"))
         .agg(avg("value").alias("avg_val"),
             min('value').alias('min_val'),
             max("value").alias("max_val"),
-            variance("value").alias("var_val"))\
+            variance("value").alias("var_val"))
     .select(col("metric"),
         col("window.start").alias("window_start"),
         col("window.end").alias("window_end"),
         "avg_val", "min_val", "max_val", "var_val"))
 
-
+'''
 parsed.writeStream \
     .format('console')\
     .outputMode('append')\
     .option("truncate", False)\
     .start()\
     .awaitTermination()
+    '''
+
 
 # Proceed with Cassandra write
 aggregated.writeStream \
@@ -97,8 +102,6 @@ aggregated.writeStream \
     .start()\
     .awaitTermination()
 
-# Await termination for query.
-#spark.streams.awaitAnyTermination()
 
 
 

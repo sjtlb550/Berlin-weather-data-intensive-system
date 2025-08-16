@@ -29,7 +29,7 @@ def get_data():
             'metric': metric,
             'value': val} # the final message shape.
 
-        time.sleep(1) # sends a message every 3 sec
+        time.sleep(1) # sends a message every 1 sec
         yield message
 
 
